@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
+import java.util.Map;
 
 import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O_MINI;
 
@@ -40,6 +41,9 @@ public class AssistantConfig {
 
     @Value("${youngman.base-url}")
     private String baseUrl;
+
+    @Value("${youngman.model-name}")
+    private String modelName;
 
     @Bean
     public YoungMan youngMan() {
@@ -97,10 +101,16 @@ public class AssistantConfig {
                 .build();
 
         ChatLanguageModel model = OpenAiChatModel.builder()
-                .modelName(GPT_4_O_MINI)
+                .modelName(modelName)
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)
                 .temperature(0D)
+                .customHeaders(
+                        Map.of("scene", "liangyonghui",
+                                "token", "Yab31yR2frCnkwXbmHBpYwwKDJ3TnjtD",
+                                "Accept", "application/json"
+                        )
+                )
                 .build();
 
         return AiServices.builder(YoungMan.class)
@@ -109,9 +119,6 @@ public class AssistantConfig {
                 .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
                 .build();
     }
-
-
-
 
 
 }

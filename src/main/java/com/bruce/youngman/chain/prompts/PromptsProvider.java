@@ -90,7 +90,8 @@ public class PromptsProvider {
                 1. 如果分析阶段识别出多种情况，请全部在此列出，不要遗漏。
                 2. 以列表形式输出每个"判定选项 + 依据步骤"。
                 3. 不要重复分析内容，也不要输出任何额外信息。
-                4. 如果知识不足以得出结论，请引导工程师后续补充详细情况；
+                4. 如果知识不足以得出结论，请引导工程师后续补充详细情况。
+                5. 仔细检查知识的因果关系，不得出现前后矛盾。
                 """;
         PromptTemplate template = PromptTemplate.from(promptTemplate);
         return template.apply(new HashMap<>());

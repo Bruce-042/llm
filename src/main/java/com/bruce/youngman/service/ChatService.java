@@ -12,8 +12,6 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15QuantizedEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.rag.content.Content;
-import dev.langchain4j.rag.content.retriever.ContentRetriever;
-import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.rag.query.Query;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import jakarta.annotation.Resource;
@@ -21,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O_MINI;
 
@@ -46,6 +45,9 @@ public class ChatService {
     @Value("${youngman.base-url}")
     private String baseUrl;
 
+    @Value("${youngman.model-name}")
+    private String modelName;
+
 
     public String askYoungMan(String message) {
         EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
@@ -63,9 +65,16 @@ public class ChatService {
         System.out.println(contents);
 
         ChatLanguageModel chatModel = OpenAiChatModel.builder()
-                .modelName(GPT_4_O_MINI)
+                .modelName(modelName)
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)
+                .temperature(0D)
+                .customHeaders(
+                        Map.of("scene", "liangyonghui",
+                                "token", "Yab31yR2frCnkwXbmHBpYwwKDJ3TnjtD",
+                                "Accept", "application/json"
+                        )
+                )
                 .build();
 
 
