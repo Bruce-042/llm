@@ -1,8 +1,10 @@
 package com.bruce.youngman.config;
 
 import com.bruce.youngman.chain.contentInjector.ConfirmIntentContentInjector;
+import com.bruce.youngman.chain.retriever.HybridRetriever;
 import com.bruce.youngman.service.YoungMan;
 import com.bruce.youngman.util.EmbeddingUtil;
+import com.bruce.youngman.util.MdDocumentSplitter;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.ChatMemory;
@@ -81,11 +83,12 @@ public class AssistantConfig {
         EmbeddingStore<TextSegment> embeddingStore =
                 EmbeddingUtil.embed2("documents/大模型TOP机型md.md", embeddingModel);
 
-        ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
-                .embeddingStore(embeddingStore)
+        HybridRetriever contentRetriever = HybridRetriever.builder()
+                .denseStore(embeddingStore)
                 .embeddingModel(embeddingModel)
-                .maxResults(2)
-                .minScore(0.6)
+                .documents(MdDocumentSplitter.splitMarkdownByTitlesAndGetDocuments("documents/大模型TOP机型md.md"))
+                .alpha(0.8f)  // 调整权重
+                .topK(3)
                 .build();
 
         RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()

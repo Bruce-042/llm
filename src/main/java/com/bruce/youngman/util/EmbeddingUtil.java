@@ -14,6 +14,7 @@ import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static dev.langchain4j.data.document.loader.FileSystemDocumentLoader.loadDocument;
 

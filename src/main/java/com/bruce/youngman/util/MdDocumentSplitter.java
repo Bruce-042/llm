@@ -1,7 +1,9 @@
 package com.bruce.youngman.util;
 
-
+import dev.langchain4j.data.document.Document;
+import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.segment.TextSegment;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * A utility class for splitting Markdown documents into segments where each title and its
@@ -35,25 +38,41 @@ public class MdDocumentSplitter {
             throw new RuntimeException(e);
         }
 
-        String content = null;
+        String fileContent = null;
         try {
-            content = new String(Files.readAllBytes(path));
+            fileContent = new String(Files.readAllBytes(path));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         List<TextSegment> segments = new ArrayList<>();
         
-        // Pattern to match markdown titles (# Title) and the content that follows until the next title
-        Pattern pattern = Pattern.compile("(#\\s+.+?)(?=(#\\s+|$))", Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(content);
+        // 使用正则表达式匹配标题和内容
+        Pattern pattern = Pattern.compile("#\\s+(.+?)\\n((?:.|\\n)*?)(?=#\\s+|$)", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(fileContent);
         
         while (matcher.find()) {
-            String segment = matcher.group(1).trim();
-            segments.add(TextSegment.from(segment));
+            String title = matcher.group(1).trim();  // 标题文本
+            String content = matcher.group(2).trim();  // 内容
+            if (StringUtils.isBlank(content)) {
+                continue;
+            }
+            
+            // 创建metadata并添加标题
+            Metadata metadata = new Metadata();
+            metadata.put("title", title);
+            
+            // 创建TextSegment，包含内容和标题元数据
+            TextSegment segment = TextSegment.from(content, metadata);
+            segments.add(segment);
         }
-        
+
         return segments;
+    }
+
+    public static List<Document> splitMarkdownByTitlesAndGetDocuments(String mdFilePath)  {
+        List<TextSegment> textSegments = splitMarkdownByTitles(mdFilePath);
+        return textSegments.stream().map(e -> Document.from(e.text(), e.metadata())).collect(Collectors.toList());
     }
     
 

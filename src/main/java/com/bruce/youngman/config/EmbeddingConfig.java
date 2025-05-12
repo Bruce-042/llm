@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class EmbeddingConfig {
 
+
     @Bean
     public EmbeddingStore<TextSegment> embeddingStore() {
         return EmbeddingUtil.embed2("documents/大模型TOP机型md.md",  new BgeSmallEnV15QuantizedEmbeddingModel());
