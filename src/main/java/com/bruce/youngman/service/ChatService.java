@@ -1,7 +1,10 @@
 package com.bruce.youngman.service;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.bruce.youngman.chain.prompts.PromptsProvider;
 import com.bruce.youngman.chain.retriever.HybridRetriever;
+import com.bruce.youngman.model.IntendVO;
 import com.bruce.youngman.util.MdDocumentSplitter;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -34,7 +37,7 @@ public class ChatService {
     private YoungMan youngMan;
 
     @Resource
-    private YoungMan confirmIntentYoungMan;
+    private IntendYoungMan confirmIntentYoungMan;
 
     @Resource
     private EmbeddingStore<TextSegment> embeddingStore;
@@ -90,7 +93,13 @@ public class ChatService {
 
     }
 
-    public String confirmIndent(String message) {
-        return confirmIntentYoungMan.answer(message);
+    public IntendVO confirmIndent(String message) {
+        String answer = confirmIntentYoungMan.answer(message);
+        JSONObject json = JSON.parseObject(answer);
+        IntendVO vo = new IntendVO();
+//        vo.setIntend(json.getString("intent"));          // 手动映射字段
+//        vo.setIntendResult(json.getString("intentResult"));
+//        vo.setThoughtChain(json.getString("thoughtChain"));
+        return vo;
     }
 }

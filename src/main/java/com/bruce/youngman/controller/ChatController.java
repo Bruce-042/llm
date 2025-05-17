@@ -1,5 +1,6 @@
 package com.bruce.youngman.controller;
 
+import com.bruce.youngman.model.IntendVO;
 import com.bruce.youngman.service.ChatService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Controller;
@@ -26,12 +27,13 @@ public class ChatController {
     @PostMapping("/chat")
     @ResponseBody
     public String chat(@RequestParam(value = "message", defaultValue = "你好") String message) {
-        // 先确认用户意图
-        String intent = chatService.confirmIndent(message);
-        // 如果确认了意图，则进行回答
-        if (intent != null && !intent.isEmpty() && !intent.contains("不明确")) {
-            return chatService.askYoungMan(message);
-        }
-        return intent;
+        return chatService.askYoungMan(message);
+    }
+
+
+    @PostMapping("/analyze-intent")
+    @ResponseBody
+    public IntendVO confirmIntend(@RequestParam(value = "message", defaultValue = "你好") String message) {
+        return chatService.confirmIndent(message);
     }
 }

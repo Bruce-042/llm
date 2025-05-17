@@ -2,6 +2,7 @@ package com.bruce.youngman.chain.contentInjector;
 
 import com.bruce.youngman.chain.prompts.PromptsProvider;
 import dev.langchain4j.data.message.*;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.injector.ContentInjector;
 
@@ -12,11 +13,17 @@ import java.util.List;
  * @since 2025/5/10 15:15
  */
 public class ConfirmIntentContentInjector implements ContentInjector {
+
+    private MessageWindowChatMemory chatMemory;
+    public ConfirmIntentContentInjector(MessageWindowChatMemory messageWindowChatMemory) {
+        this.chatMemory = messageWindowChatMemory;
+    }
+
     @Override
     public ChatMessage inject(List<Content> list, ChatMessage chatMessage) {
-        String text1 = PromptsProvider.confirmIndentPrompt(list).text();
-        System.out.println("text1-->" + text1);
-        System.out.println("chatMessage-->" + chatMessage);
-        return new UserMessage(text1);
+        List<ChatMessage> messages = chatMemory.messages();
+        UserMessage userMessage = PromptsProvider.confirmIntentPrompt(list, chatMessage, messages).toUserMessage();
+        System.out.println("userMessage-->" + userMessage);
+        return userMessage;
     }
 }

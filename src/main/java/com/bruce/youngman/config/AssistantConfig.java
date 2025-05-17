@@ -2,6 +2,7 @@ package com.bruce.youngman.config;
 
 import com.bruce.youngman.chain.contentInjector.ConfirmIntentContentInjector;
 import com.bruce.youngman.chain.retriever.HybridRetriever;
+import com.bruce.youngman.service.IntendYoungMan;
 import com.bruce.youngman.service.YoungMan;
 import com.bruce.youngman.util.EmbeddingUtil;
 import com.bruce.youngman.util.MdDocumentSplitter;
@@ -15,15 +16,19 @@ import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15Quantize
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
+import dev.langchain4j.rag.content.Content;
+import dev.langchain4j.rag.content.aggregator.ContentAggregator;
 import dev.langchain4j.rag.content.injector.DefaultContentInjector;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
+import dev.langchain4j.rag.query.Query;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +85,8 @@ public class AssistantConfig {
 
 
     @Bean
-    public YoungMan confirmIntentYoungMan() {
+    public IntendYoungMan confirmIntentYoungMan() {
+        MessageWindowChatMemory messageWindowChatMemory = MessageWindowChatMemory.withMaxMessages(10);
 
         EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
 
@@ -97,7 +103,7 @@ public class AssistantConfig {
 
         RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
                 .contentRetriever(contentRetriever)
-                .contentInjector(new ConfirmIntentContentInjector())
+                .contentInjector(new ConfirmIntentContentInjector(messageWindowChatMemory))
                 .build();
 
         ChatLanguageModel model = OpenAiChatModel.builder()
@@ -113,10 +119,10 @@ public class AssistantConfig {
                 )
                 .build();
 
-        return AiServices.builder(YoungMan.class)
+        return AiServices.builder(IntendYoungMan.class)
                 .chatLanguageModel(model)
                 .retrievalAugmentor(retrievalAugmentor)
-                .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
+                .chatMemory(messageWindowChatMemory)
                 .build();
     }
 
