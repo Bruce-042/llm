@@ -167,6 +167,12 @@
             <version>8.11.4</version> <!-- 建议与lucene-core版本一致 -->
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>8.11.4</version>
+        </dependency>
+
 
         <dependency>
             <groupId>com.alibaba</groupId>

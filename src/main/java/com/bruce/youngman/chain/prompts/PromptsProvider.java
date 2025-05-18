@@ -35,6 +35,7 @@ public class PromptsProvider {
         promptBuilder.append("你是一个专业的手机质检工程师，针对用户问题进行专业的意图判断助手。\n");
         promptBuilder.append("参考内容：\n");
         for (Content content : contents) {
+            promptBuilder.append(content.textSegment().metadata().getString("title")).append("\n");
             promptBuilder.append(content.textSegment().text()).append("\n");
         }
         promptBuilder.append("\n");
@@ -73,60 +74,57 @@ public class PromptsProvider {
 
     }
 
-    public static Prompt confirmIntentPrompt(List<Content> contents, ChatMessage question) {
-        // 构建结构化知识库表示
-        StringBuilder knowledgeBuilder = new StringBuilder();
-        for (Content content : contents) {
-            String title = content.textSegment().metadata().getString("title");
-            String text = content.textSegment().text();
-            knowledgeBuilder.append(String.format("【%s】\n%s\n\n", title, text));
-        }
+//    public static Prompt confirmIntentPrompt(List<Content> contents, ChatMessage question) {
+//        // 构建结构化知识库表示
+//        StringBuilder knowledgeBuilder = new StringBuilder();
+//        for (Content content : contents) {
+//            String title = content.textSegment().metadata().getString("title");
+//            String text = content.textSegment().text();
+//            knowledgeBuilder.append(String.format("【%s】\n%s\n\n", title, text));
+//        }
+//
+//        // 采用决策树式提示词结构
+//        String promptTemplate = """
+//                    你是一个专业的手机质检工程师，针对用户问题进行专业的意图判断助手。
+//                                请结合以下信息进行思考：
+//                                - 【检索到的知识库片段】
+//                                {{contents}}
+//                                - 【用户的提问】
+//                                {{question}}
+//
+//                                请遵循以下**推理链**（Chain of Thought）逐步分析并作答：
+//
+//                                1. **提取核心问题**：用户想了解什么？
+//                                2. **是否存在模糊表达**：
+//                                   - 是否包含不明确指代（如“这个”、“这种”、“这样”）？
+//                                   - 是否缺乏具体主语、对象、现象？（如“要算划痕吗”）
+//                                   - 是否为反问句、否定表达（如“不用判断吧？”）？
+//                                3. **知识比对**：检索到的知识片段是否能明确用户的意图？
+//                                4. **综合判断**：
+//                                   - 若用户的疑问，能够确定咨询的具体问题（描述了具体现象的），请判定为**明确**；
+//                                   - 若用户提问中，有明显的模糊代指，并且没有明确代指信息，无法确定具体问题（无法判断出工程师所遇现象的），请判定为**不明确**
+//                                   - 若用户的疑问，无法能够确定提问的意图，判定为**不明确**；
+//
+//                                【输出格式要求】：
+//                                - 如果判断为**明确**，请输出：明确：<一句话总结用户意图>
+//                                - 如果判断为**不明确**，请输出：不明确：<基于知识库，提出引导用户明确意图问题>，<若知识库无任何对应知识，请让咨询人工>
+//
+//
+//                                【重要注意事项】：
+//                                - 必须基于检索到的知识和用户问题推理，**禁止主观想象或无依据推断**。
+//                                - 不允许你基于常识、概率、经验去“猜测”用户意思；
+//                                - 保持输出格式简洁、清晰，不输出额外说明或废话。
+//                                - 在输出前，务必在内部推理中逐步完成以上步骤，以保证判断严谨、准确。
+//                                - 如信息缺失，必须要求用户补充，不得代为填空；
+//                """;
+//
+//        PromptTemplate template = PromptTemplate.from(promptTemplate);
+//        return template.apply(Map.of("contents", knowledgeBuilder, "question", question));
+//    }
 
-        // 采用决策树式提示词结构
-        String promptTemplate = """
-                    你是一个专业的手机质检工程师，针对用户问题进行专业的意图判断助手。
-                                请结合以下信息进行思考：
-                                - 【检索到的知识库片段】
-                                {{contents}}
-                                - 【用户的提问】
-                                {{question}}
-                                
-                                请遵循以下**推理链**（Chain of Thought）逐步分析并作答：
-                                
-                                1. **提取核心问题**：用户想了解什么？
-                                2. **是否存在模糊表达**：
-                                   - 是否包含不明确指代（如“这个”、“这种”、“这样”）？
-                                   - 是否缺乏具体主语、对象、现象？（如“要算划痕吗”）
-                                   - 是否为反问句、否定表达（如“不用判断吧？”）？
-                                3. **知识比对**：检索到的知识片段是否能明确用户的意图？
-                                4. **综合判断**：
-                                   - 若用户的疑问，能够确定咨询的具体问题（描述了具体现象的），请判定为**明确**；
-                                   - 若用户提问中，有明显的模糊代指，并且没有明确代指信息，无法确定具体问题（无法判断出工程师所遇现象的），请判定为**不明确**
-                                   - 若用户的疑问，无法能够确定提问的意图，判定为**不明确**；
-                                
-                                【输出格式要求】：
-                                - 如果判断为**明确**，请输出：明确：<一句话总结用户意图>
-                                - 如果判断为**不明确**，请输出：不明确：<基于知识库，提出引导用户明确意图问题>，<若知识库无任何对应知识，请让咨询人工>
-                                
-                                
-                                【重要注意事项】：
-                                - 必须基于检索到的知识和用户问题推理，**禁止主观想象或无依据推断**。
-                                - 不允许你基于常识、概率、经验去“猜测”用户意思；
-                                - 保持输出格式简洁、清晰，不输出额外说明或废话。
-                                - 在输出前，务必在内部推理中逐步完成以上步骤，以保证判断严谨、准确。
-                                - 如信息缺失，必须要求用户补充，不得代为填空；
-                """;
-
-        PromptTemplate template = PromptTemplate.from(promptTemplate);
-        return template.apply(Map.of("contents", knowledgeBuilder, "question", question));
-    }
 
 
     public static Prompt stepByStepAnalysisPrompt(List<Content> contents, String question) {
-        Map<String, String> contentsMap = new HashMap<>();
-        for (Content content : contents) {
-            String text = content.textSegment().text();
-        }
         String promptTemplate = """
                 # 角色设定（分析阶段）
                 你是一名资深的手机质检培训专家助手，精通所提供文档中的所有质检标准与流程。现在你负责针对工程师提出的问题，进行分析

@@ -2,9 +2,9 @@ package com.bruce.youngman.service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.bruce.youngman.chain.prompts.PromptsProvider;
 import com.bruce.youngman.chain.retriever.HybridRetriever;
-import com.bruce.youngman.model.IntendVO;
+import com.bruce.youngman.chain.prompts.PromptsProvider;
+import com.bruce.youngman.model.IntentVO;
 import com.bruce.youngman.util.MdDocumentSplitter;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -24,8 +24,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 
-import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O_MINI;
-
 /**
  * @author Liangyonghui
  * @since 2025/5/9 16:00
@@ -37,7 +35,7 @@ public class ChatService {
     private YoungMan youngMan;
 
     @Resource
-    private IntendYoungMan confirmIntentYoungMan;
+    private IntentYoungMan confirmIntentYoungMan;
 
     @Resource
     private EmbeddingStore<TextSegment> embeddingStore;
@@ -93,13 +91,13 @@ public class ChatService {
 
     }
 
-    public IntendVO confirmIndent(String message) {
+    public IntentVO confirmIndent(String message) {
         String answer = confirmIntentYoungMan.answer(message);
         JSONObject json = JSON.parseObject(answer);
-        IntendVO vo = new IntendVO();
-//        vo.setIntend(json.getString("intent"));          // 手动映射字段
-//        vo.setIntendResult(json.getString("intentResult"));
-//        vo.setThoughtChain(json.getString("thoughtChain"));
+        IntentVO vo = new IntentVO();
+        vo.setIntent(json.getString("intent"));
+        vo.setIntendResult(json.getString("intentResult"));
+        vo.setThoughtChain(json.getString("thoughtChain"));
         return vo;
     }
 }
