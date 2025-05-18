@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.bruce.youngman.chain.retriever.HybridRetriever;
 import com.bruce.youngman.chain.prompts.PromptsProvider;
+import com.bruce.youngman.model.AnswerVO;
 import com.bruce.youngman.model.IntentVO;
 import com.bruce.youngman.util.MdDocumentSplitter;
 import dev.langchain4j.data.message.AiMessage;
@@ -50,21 +51,8 @@ public class ChatService {
     private String modelName;
 
 
-    public String askYoungMan(String message) {
-        EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
-
-        HybridRetriever contentRetriever = HybridRetriever.builder()
-                .denseStore(embeddingStore)
-                .embeddingModel(embeddingModel)
-                .documents(MdDocumentSplitter.splitMarkdownByTitlesAndGetDocuments("documents/大模型TOP机型md.md"))
-                .alpha(0.8f)  // 调整权重
-                .topK(3)
-                .build();
-
-        List<Content> contents = contentRetriever.retrieve(Query.from(message));
-
-        System.out.println(contents);
-
+    public AnswerVO askYoungMan(String message) {
+        String answer = youngMan.answer(message);
         ChatLanguageModel chatModel = OpenAiChatModel.builder()
                 .modelName(modelName)
                 .apiKey(apiKey)
@@ -78,16 +66,14 @@ public class ChatService {
                 )
                 .build();
 
+        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+        System.out.println(answer);
+        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 
-        AiMessage aiMessage = chatModel.chat(PromptsProvider.stepByStepAnalysisPrompt(contents, message).toAiMessage()).aiMessage();
-        System.out.println("aiMessage========================================================================");
-        System.out.println(aiMessage);
-        System.out.println("aiMessage========================================================================");
-
-
-        UserMessage userMessage = PromptsProvider.finalAnswerPrompt2(aiMessage.text(), message).toUserMessage();
+        UserMessage userMessage = PromptsProvider.finalAnswerPrompt2(answer, message).toUserMessage();
         SystemMessage systemMessage = PromptsProvider.finalAnswerPrompt().toSystemMessage();
-        return chatModel.chat(userMessage, systemMessage).aiMessage().text();
+        String text = chatModel.chat(userMessage, systemMessage).aiMessage().text();
+        return JSON.parseObject(text, AnswerVO.class);
 
     }
 

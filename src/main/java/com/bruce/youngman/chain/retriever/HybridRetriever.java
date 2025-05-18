@@ -3,6 +3,7 @@ package com.bruce.youngman.chain.retriever;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
@@ -45,6 +46,7 @@ public class HybridRetriever implements ContentRetriever {
     private final float alpha; // 稠密检索权重 (0-1)
     private final int topK;    // 返回结果数量
     // endregion
+    private MessageWindowChatMemory messageWindowChatMemory;
 
     // region 构造器
     private HybridRetriever(Builder builder) {
@@ -53,6 +55,7 @@ public class HybridRetriever implements ContentRetriever {
         this.alpha = builder.alpha;
         this.topK = builder.topK;
         this.documents = builder.documents;
+        this.messageWindowChatMemory = builder.messageWindowChatMemory;
         this.analyzer = new SmartChineseAnalyzer();
         this.sparseIndex = buildSparseIndex(builder.documents);
     }
@@ -226,10 +229,17 @@ public class HybridRetriever implements ContentRetriever {
         private float alpha = 0.7f;
         private int topK = 5;
 
+        private MessageWindowChatMemory messageWindowChatMemory;
         public Builder denseStore(EmbeddingStore<TextSegment> denseStore) {
             this.denseStore = denseStore;
             return this;
         }
+
+        public Builder messageWindowChatMemory(MessageWindowChatMemory messageWindowChatMemory) {
+            this.messageWindowChatMemory = messageWindowChatMemory;
+            return this;
+        }
+
 
         public Builder embeddingModel(EmbeddingModel embeddingModel) {
             this.embeddingModel = embeddingModel;

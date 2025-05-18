@@ -24,9 +24,11 @@ public class PromptsProvider {
         if (history != null && !history.isEmpty()) {
             promptBuilder.append("历史对话：\n");
             for (ChatMessage message : history) {
-                promptBuilder.append(message.type() == ChatMessageType.USER ? "用户: " : "助手: ")
-                        .append(message.type() == ChatMessageType.USER ? ((UserMessage)message).contents() : ((AiMessage)message).text())
-                        .append("\n");
+                if (message.type() == ChatMessageType.USER || message.type() == ChatMessageType.AI) {
+                    promptBuilder.append(message.type() == ChatMessageType.USER ? "用户: " : "助手: ")
+                            .append(message.type() == ChatMessageType.USER ? ((UserMessage)message).contents() : ((AiMessage)message).text())
+                            .append("\n");
+                }
             }
             promptBuilder.append("\n");
         }
@@ -59,7 +61,7 @@ public class PromptsProvider {
                 "                                  请以严格的JSON格式返回数据，不要包含任何解释或额外文本。" +
                 "                                        返回一个包含以下字段的JSON对象:" + "\n" +
                 "                                          intentResult: 明确 或 不明确" +
-                "                                          intent: 一句话总结用户的意图，询问用户是否想问这个，比如：你是不是想咨询xxxxxx" +
+                "                                          intent: 一句话总结用户的意图，询问用户是否想问这个，比如：你是不是想咨询【xxxxxx】" +
                 "                                          thoughtChain: 你的思考分析的全过程思维链路" +
                 "                                \n" +
                 "                                \n" +
@@ -158,6 +160,56 @@ public class PromptsProvider {
         return template.apply(Map.of("contents", contents, "question", question));
     }
 
+    public static Prompt stepByStepAnalysisPrompt(List<Content> contents, ChatMessage currentMessage, List<ChatMessage> history) {
+        StringBuilder promptBuilder = new StringBuilder();
+        // 添加历史会话
+        // 添加历史会话
+        if (history != null && !history.isEmpty()) {
+            promptBuilder.append("历史对话：\n");
+            for (ChatMessage message : history) {
+                if (message.type() == ChatMessageType.USER || message.type() == ChatMessageType.AI) {
+                    promptBuilder.append(message.type() == ChatMessageType.USER ? "用户: " : "助手: ")
+                            .append(message.type() == ChatMessageType.USER ? ((UserMessage)message).contents() : ((AiMessage)message).text())
+                            .append("\n");
+                }
+            }
+            promptBuilder.append("\n");
+        }
+
+
+        String promptTemplate = promptBuilder + """
+                # 角色设定（分析阶段）
+                你是一名资深的手机质检培训专家助手，精通所提供文档中的所有质检标准与流程。现在你负责针对工程师提出的问题，进行分析
+
+                # 分析要求
+                1. 绝不凭空添加任何未在文档中出现的信息。
+                2. 分步思考至少包含 4–6 个步骤，每步都要：
+                - 简明扼要地描述该步骤在做什么（如"判定鼓包程度"）。
+                - 标注依据来源（例如"依据文档第2段""参照标准X-3条款"）。
+                3. 步骤涵盖：  
+                1) 前提假设；  
+                2) 核心判定标准；  
+                3) 对比分析过程；  
+                4) 最终判断逻辑。 
+                4) 如果可能导致衍生的知识，需要一并纳入到我靠中
+                5. 如果分析阶段识别出多种情况，请全部在此列出，不要遗漏。
+
+                # 输出格式
+                思考过程：  
+                Step 1（依据：…）：…  
+                Step 2（依据：…）：…  
+                …  
+                Step N（依据：…）：…
+
+                背景资料：
+                {{contents}}
+
+                请先对以下问题进行详细的分步思考，并列出判断依据：
+                问题：{{question}}""";
+        PromptTemplate template = PromptTemplate.from(promptTemplate);
+        return template.apply(Map.of("contents", contents, "question", ((UserMessage)currentMessage).contents()));
+    }
+
 
     public static Prompt finalAnswerPrompt() {
         String promptTemplate = """
@@ -178,11 +230,18 @@ public class PromptsProvider {
 
     public static Prompt finalAnswerPrompt2(String analysis, String question) {
         String promptTemplate = """
-                以下是分步思考：
+                以下是分步思考和背景资料：
                 {{analysis}}
 
                 请基于以上思考给出最准确的结论和推荐选项：
-                问题：{{question}}""";
+                问题：{{question}}""" +
+                "                                【输出格式要求】：\n" +
+                "                                  请以严格的JSON格式返回数据，不要包含任何解释或额外文本。" +
+                "                                        返回一个包含以下字段的JSON对象:" + "\n" +
+                "                                          answer: 一句话总结回答" +
+                "                                          thoughtChain: 你的思考分析的全过程思维链路" +
+                "                                \n"
+                ;
         PromptTemplate template = PromptTemplate.from(promptTemplate);
         return template.apply(Map.of("analysis", analysis, "question", question));
     }

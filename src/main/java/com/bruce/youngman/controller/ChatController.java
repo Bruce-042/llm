@@ -1,5 +1,6 @@
 package com.bruce.youngman.controller;
 
+import com.bruce.youngman.model.AnswerVO;
 import com.bruce.youngman.model.IntentVO;
 import com.bruce.youngman.service.ChatService;
 import jakarta.annotation.Resource;
@@ -26,7 +27,7 @@ public class ChatController {
 
     @PostMapping("/chat")
     @ResponseBody
-    public String chat(@RequestParam(value = "message", defaultValue = "你好") String message) {
+    public AnswerVO chat(@RequestParam(value = "message", defaultValue = "你好") String message) {
         return chatService.askYoungMan(message);
     }
 
