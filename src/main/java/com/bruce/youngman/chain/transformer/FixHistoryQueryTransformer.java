@@ -44,11 +44,18 @@ public class FixHistoryQueryTransformer implements QueryTransformer {
         List<ChatMessage> history = chatMemory.messages();
         // 首次提问一定是精确的
         if (CollectionUtils.isEmpty(history)) {
+            System.out.println("==================查询1=====================");
+            System.out.println(query);
+            System.out.println("=======================================");
             return List.of(query);
         }
+        // 第二次提问加入历史会话
         SystemMessage systemMessage = PromptTemplate.from(promptStr).apply(Map.of("chatMemory", history, "query", query.text())).toSystemMessage();
         ChatResponse chat = chatModel.chat(systemMessage);
         AiMessage aiMessage = chat.aiMessage();
+        System.out.println("==================查询2=====================");
+        System.out.println(Query.from(aiMessage.text()));
+        System.out.println("=======================================");
         return List.of(Query.from(aiMessage.text()));
     }
 }

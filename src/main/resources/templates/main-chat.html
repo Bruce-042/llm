@@ -52,6 +52,16 @@
             border-radius: 15px;
             font-size: 0.9em;
         }
+        .thought-chain {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        .answer {
+            background-color: #e9ecef;
+            border-left: 4px solid #28a745;
+        }
     </style>
 </head>
 <body>
@@ -91,6 +101,42 @@
         const intent = urlParams.get('intent');
         if (intent) {
             document.getElementById('intentText').textContent = intent;
+            // 自动提交intent作为第一条消息
+            setTimeout(() => {
+                addMessage(intent, true);
+                showLoading();
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `message=${encodeURIComponent(intent)}`
+                })
+                .then(response => response.json())
+                .then(result => {
+                    // 显示思考过程
+                    const thoughtDiv = document.createElement('div');
+                    thoughtDiv.className = 'message bot-message thought-chain';
+                    thoughtDiv.innerHTML = `<strong>思考过程：</strong><br>${result.thoughtChain}`;
+                    document.getElementById('chatContainer').appendChild(thoughtDiv);
+                    
+                    // 显示答案
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = 'message bot-message answer';
+                    answerDiv.innerHTML = `<strong>回答：</strong><br>${result.answer}`;
+                    document.getElementById('chatContainer').appendChild(answerDiv);
+                    
+                    // 滚动到底部
+                    const chatContainer = document.getElementById('chatContainer');
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                })
+                .catch(error => {
+                    addMessage('抱歉，发生了一些错误，请稍后重试。', false);
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+            }, 500); // 延迟500ms执行，确保页面完全加载
         }
 
         function addMessage(message, isUser) {
@@ -127,8 +173,22 @@
                     },
                     body: `message=${encodeURIComponent(message)}`
                 });
-                const result = await response.text();
-                addMessage(result, false);
+                const result = await response.json();
+                // 显示思考过程
+                const thoughtDiv = document.createElement('div');
+                thoughtDiv.className = 'message bot-message thought-chain';
+                thoughtDiv.innerHTML = `<strong>思考过程：</strong><br>${result.thoughtChain}`;
+                document.getElementById('chatContainer').appendChild(thoughtDiv);
+                
+                // 显示答案
+                const answerDiv = document.createElement('div');
+                answerDiv.className = 'message bot-message answer';
+                answerDiv.innerHTML = `<strong>回答：</strong><br>${result.answer}`;
+                document.getElementById('chatContainer').appendChild(answerDiv);
+                
+                // 滚动到底部
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
             } catch (error) {
                 addMessage('抱歉，发生了一些错误，请稍后重试。', false);
             } finally {
