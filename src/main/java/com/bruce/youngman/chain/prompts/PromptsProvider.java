@@ -1,9 +1,6 @@
 package com.bruce.youngman.chain.prompts;
 
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.data.message.ChatMessageType;
-import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.data.message.*;
 import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.content.Content;
@@ -17,6 +14,71 @@ import java.util.Map;
  * @since 2025/5/10 14:59
  */
 public class PromptsProvider {
+
+
+    public static Prompt confirmIntentPrompt(List<Content> contents, ChatMessage currentMessage) {
+        StringBuilder promptBuilder = new StringBuilder();
+
+        promptBuilder.append("\n你是一个专业的二手手机质检工程师，负责识别用户问题的真实意图，并判断其是否明确。\n" +
+                "\n" +
+                "【背景知识】\n" +
+                "1. 二手手机质检包括：屏幕、外观、主板、功能测试、拆修史等。\n" +
+                "2. 存在大量专有术语与模糊表述，需结合知识库解释。\n" +
+                "3. 有特定检测标准与工具，请结合知识片段理解。\n" +
+                "\n" +
+                "【可用信息】\n" +
+                "- 检索到的知识库片段\n" +
+                "- 用户提问文本\n" +
+                "\n" +
+                "【步骤1：知识吸收】\n" +
+                "- 阅读知识库片段，储备相关术语和检测常识。\n" +
+                "\n" +
+                "【步骤2：提取核心问题】\n" +
+                "- 明确用户的真正意图，若未表达疑问，请补充为一句清晰疑问（如：我应该怎么办？）\n" +
+                "- 若含错别字，请进行修正。\n" +
+                "\n" +
+                "【步骤3：模糊与代指处理】\n" +
+                "- 若出现\"这个\"等代指，判断是否能 100% 明确，能则补充，否则忽略；\n" +
+                "- 若主语缺失或术语含糊，判断是否能明确含义，能则补充，否则忽略；\n" +
+                "- **严禁主观猜测或常识补全**，只能根据用户提问进行处理。\n" +
+                "\n" +
+                "【步骤4：分析与判断】\n" +
+                "- 结合知识片段，推断用户意图是否清晰；\n" +
+                "- 若无歧义且语义明确，判定为\"明确\"并总结一句话；\n" +
+                "- 否则判为\"不明确\"，提出1个引导性问题帮助用户补充。\n" +
+                "\n" +
+                "【输出格式】\n" +
+                "请严格按如下 JSON 格式输出：\n" +
+                "{ " +
+                "  \"thoughtChain\": \"简要描述上述推理过程\"," +
+                "  \"intentResult\": \"明确或不明确\"," +
+                "  \"intent\": \"若明确，请总结；若不明确，请输出一个补充性提问\"" +
+                "}" +
+                "\n" +
+                "【重要说明】\n" +
+                "-  ❌禁止主观推测、常识判断或或者自己猜测进行内容填空；\n" +
+                "- 思考过程需结构清晰，便于后续调试；\n" +
+                "- 不得输出除 JSON 外的任何文字。\n");
+
+
+        // 添加检索到的内容
+        promptBuilder.append("以下是检索到的知识库片段：\n");
+        for (Content content : contents) {
+            promptBuilder.append("----------------------------------------------------------------------------\n");
+            promptBuilder.append("提问：").append(content.textSegment().metadata().getString("title")).append("\n");
+            promptBuilder.append("回答：").append(content.textSegment().text()).append("\n");
+            promptBuilder.append("----------------------------------------------------------------------------\n");
+        }
+
+        // 添加当前消息
+        dev.langchain4j.data.message.TextContent content = (TextContent) ((UserMessage) currentMessage).contents().get(0);
+        promptBuilder.append("以下是用户提问文本：\n").append(content.text()).append("\n");
+        return Prompt.from(promptBuilder.toString());
+
+    }
+
+
+
     public static Prompt confirmIntentPrompt(List<Content> contents, ChatMessage currentMessage, List<ChatMessage> history) {
         StringBuilder promptBuilder = new StringBuilder();
 
@@ -75,6 +137,8 @@ public class PromptsProvider {
         return Prompt.from(promptBuilder.toString());
 
     }
+
+
 
 //    public static Prompt confirmIntentPrompt(List<Content> contents, ChatMessage question) {
 //        // 构建结构化知识库表示

@@ -101,19 +101,20 @@ public class AssistantConfig {
 
     @Bean
     public IntentYoungMan confirmIntentYoungMan() {
-        MessageWindowChatMemory messageWindowChatMemory = MessageWindowChatMemory.withMaxMessages(10);
+        // todo 后面调成10
+        MessageWindowChatMemory messageWindowChatMemory = MessageWindowChatMemory.withMaxMessages(1);
 
         EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
 
         EmbeddingStore<TextSegment> embeddingStore =
-                EmbeddingUtil.embed2("documents/大模型TOP机型md.md", embeddingModel);
+                EmbeddingUtil.embed2("documents/新版知识库_格式化.md", embeddingModel);
 
         HybridRetriever contentRetriever = HybridRetriever.builder()
                 .denseStore(embeddingStore)
                 .embeddingModel(embeddingModel)
                 .documents(MdDocumentSplitter.splitMarkdownByTitlesAndGetDocuments("documents/大模型TOP机型md.md"))
                 .alpha(0.8f)  // 调整权重
-                .topK(3)
+                .topK(10)
                 .build();
 
         RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()

@@ -38,6 +38,12 @@ public class ChatService {
     @Resource
     private IntentYoungMan confirmIntentYoungMan;
 
+    public static int sureCount = 0;
+
+    public static int uncertainCount = 0;
+
+    public static int total = 0;
+
     @Resource
     private EmbeddingStore<TextSegment> embeddingStore;
 
@@ -79,11 +85,32 @@ public class ChatService {
 
     public IntentVO confirmIndent(String message) {
         String answer = confirmIntentYoungMan.answer(message);
-        JSONObject json = JSON.parseObject(answer);
-        IntentVO vo = new IntentVO();
-        vo.setIntent(json.getString("intent"));
-        vo.setIntendResult(json.getString("intentResult"));
-        vo.setThoughtChain(json.getString("thoughtChain"));
-        return vo;
+
+        try {
+            JSONObject json = JSON.parseObject(answer);
+            String intentResult = json.getString("intentResult");
+            String intent = json.getString("intent");
+            if ("明确".equals(intentResult)) {
+                sureCount++;
+            }
+            total++;
+            System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+            System.out.println("提问:" + message);
+            System.out.println("是否明确:" + intentResult);
+            System.out.println("猜测询问:" + intent);
+            System.out.println("明确数量：" + sureCount + "/" + total);
+            System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+            IntentVO vo = new IntentVO();
+            vo.setIntent(intent);
+            vo.setIntendResult(intentResult);
+            vo.setThoughtChain(json.getString("thoughtChain"));
+            return vo;
+        } catch (Exception e) {
+            IntentVO vo = new IntentVO();
+            vo.setIntent(answer);
+            vo.setIntendResult("格式不正确");
+            vo.setThoughtChain(answer);
+            return vo;
+        }
     }
 }

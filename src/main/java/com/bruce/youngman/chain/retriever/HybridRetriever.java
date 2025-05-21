@@ -93,7 +93,10 @@ public class HybridRetriever implements ContentRetriever {
         try (IndexReader reader = DirectoryReader.open(sparseIndex)) {
             IndexSearcher searcher = new IndexSearcher(reader);
             QueryParser parser = new QueryParser("content", analyzer);
-            Query luceneQuery = parser.parse(query);
+            
+            // Preprocess query to escape special characters
+            String processedQuery = query.replaceAll("[\\[\\](){}^\"~*?:\\\\]", "\\\\$0");
+            Query luceneQuery = parser.parse(processedQuery);
 
             TopDocs topDocs = searcher.search(luceneQuery, topK);
             return Arrays.stream(topDocs.scoreDocs)
