@@ -139,6 +139,7 @@ public class AssistantConfig {
                 .chatLanguageModel(model)
                 .retrievalAugmentor(retrievalAugmentor)
                 .chatMemory(messageWindowChatMemory)
+//                .systemMessageProvider(e -> PromptsProvider.confirmIntentSystemPrompt().text())
                 .build();
     }
 
