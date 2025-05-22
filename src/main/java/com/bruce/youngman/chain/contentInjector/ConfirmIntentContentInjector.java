@@ -23,7 +23,7 @@ public class ConfirmIntentContentInjector implements ContentInjector {
     public ChatMessage inject(List<Content> list, ChatMessage chatMessage) {
         List<ChatMessage> messages = chatMemory.messages();
         // todo 后续改回来
-        UserMessage userMessage = PromptsProvider.confirmIntentPrompt(list, chatMessage).toUserMessage();
+        UserMessage userMessage = PromptsProvider.confirmIntentPrompt2(list, chatMessage).toUserMessage();
         System.out.println("++++++++++++++++++++++++++userMessage++++++++++++++++++++++++++++++++");
         System.out.println(userMessage.singleText());
         System.out.println("++++++++++++++++++++++++++userMessage++++++++++++++++++++++++++++++++");

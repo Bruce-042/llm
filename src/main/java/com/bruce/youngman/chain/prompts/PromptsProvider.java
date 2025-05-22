@@ -16,7 +16,8 @@ import java.util.Map;
 public class PromptsProvider {
     public static Prompt confirmIntentSystemPrompt() {
 
-        String promptBuilder = "\n你是一个专业的二手手机质检工程师，负责识别用户问题的真实意图，并判断其是否明确。\n" +
+        StringBuilder promptBuilder = new StringBuilder();
+        promptBuilder.append("\n你是一个专业的二手手机质检工程师，负责识别用户问题的真实意图，并判断其是否明确。\n" +
                 "\n" +
                 "【背景知识】\n" +
                 "1. 二手手机质检包括：屏幕、外观、主板、功能测试、拆修史等。\n" +
@@ -42,22 +43,84 @@ public class PromptsProvider {
                 "【步骤4：分析与判断】\n" +
                 "- 结合知识片段，推断用户意图是否清晰；\n" +
                 "- 若无歧义且语义明确，判定为\"明确\"并总结一句话；\n" +
-                "- 否则判为\"不明确\"，提出1个引导性问题帮助用户补充；\n" +
+                "- 否则判为\"不明确\"，提出1个引导性问题帮助用户补充。\n" +
                 "\n" +
-                "【输出格式】\n" +
-                "请严格按如下 JSON 格式输出：\n" +
-                "{ " +
-                "  \"thoughtChain\": \"简要描述上述推理过程\"," +
-                "  \"intentResult\": \"明确或不明确\"," +
-                "  \"intent\": \"若明确，请总结；若不明确，请输出一个补充性提问\"" +
-                "}" +
+                "【输出格式要求】：\n" +
+                " 请以严格的JSON格式返回数据，不要包含任何解释或额外文本。" +
+                "返回一个包含以下字段的JSON对象:" + "\n" +
+                "intentResult: 明确 或 不明确" +
+                "intent: 若明确，请总结;若不明确，请输出一个补充性提问\"" +
+                "thoughtChain: 逐步分析过程文字" +
                 "\n" +
+                "                                \n" +
                 "【重要说明】\n" +
                 "-  ❌禁止主观推测、常识判断或或者自己猜测进行内容填空；\n" +
                 "- 思考过程需结构清晰，便于后续调试；\n" +
-                "- 不得输出除 JSON 外的任何文字。\n";
+                "- 不得输出除 JSON 外的任何文字。\n");
 
-        return Prompt.from(promptBuilder);
+        return Prompt.from(promptBuilder.toString());
+
+    }
+
+    public static Prompt confirmIntentPrompt2(List<Content> contents, ChatMessage currentMessage) {
+        StringBuilder promptBuilder = new StringBuilder();
+
+        promptBuilder.append("\n你是一个专业的二手手机质检工程师，负责识别用户问题的真实意图，并判断其是否明确。\n" +
+                "\n" +
+                "【背景知识】\n" +
+                "1. 二手手机质检包括：屏幕、外观、主板、功能测试、拆修史等。\n" +
+                "2. 存在大量专有术语与模糊表述，需结合知识库解释。\n" +
+                "3. 有特定检测标准与工具，请结合知识片段理解。\n" +
+                "\n" +
+                "【可用信息】\n" +
+                "- 检索到的知识库片段\n" +
+                "- 用户提问文本\n" +
+                "\n" +
+                "【步骤1：知识吸收】\n" +
+                "- 阅读知识库片段，储备相关术语和检测常识。\n" +
+                "\n" +
+                "【步骤2：提取核心问题】\n" +
+                "- 明确用户的真正意图，若未表达疑问，请补充为一句清晰疑问（如：我应该怎么办？）\n" +
+                "- 若含错别字，请进行修正。\n" +
+                "\n" +
+                "【步骤3：模糊与代指处理】\n" +
+                "- 若出现\"这个\"等代指，判断是否能 100% 明确，能则补充，否则忽略；\n" +
+                "- 若主语缺失或术语含糊，判断是否能明确含义，能则补充，否则忽略；\n" +
+                "- **严禁主观猜测或常识补全**，只能根据用户提问进行处理；\n" +
+                "- **不用基于已有知识过分发散强加限制条件，导致被判定为不明确。\n" +
+                "\n" +
+                "【步骤4：分析与判断】\n" +
+                "- 结合知识片段，推断用户意图是否清晰；\n" +
+                "- 若无歧义且语义明确，判定为\"明确\"并总结一句话；\n" +
+                "- 否则判为\"不明确\"，提出1个引导性问题帮助用户补充。\n" +
+                "\n" +
+                "【输出格式要求】：\n" +
+                " 请以严格的JSON格式返回数据，不要包含任何解释或额外文本。" +
+                "返回一个包含以下字段的JSON对象:" + "\n" +
+                "intentResult: 明确 或 不明确" +
+                "intent: 若明确，请总结;若不明确，请输出一个补充性提问\"" +
+                "thoughtChain: 逐步分析过程文字" +
+                "\n" +
+                "                                \n" +
+                "【重要说明】\n" +
+                "-  ❌禁止主观推测、常识判断或或者自己猜测进行内容填空；\n" +
+                "- 思考过程需结构清晰，便于后续调试；\n" +
+                "- 不得输出除 JSON 外的任何文字。\n");
+
+
+        // 添加检索到的内容
+        promptBuilder.append("以下是检索到的知识库片段：\n");
+        for (Content content : contents) {
+            promptBuilder.append("----------------------------------------------------------------------------\n");
+            promptBuilder.append("提问：").append(content.textSegment().metadata().getString("title")).append("\n");
+            promptBuilder.append("回答：").append(content.textSegment().text()).append("\n");
+            promptBuilder.append("----------------------------------------------------------------------------\n");
+        }
+
+        // 添加当前消息
+        dev.langchain4j.data.message.TextContent content = (TextContent) ((UserMessage) currentMessage).contents().get(0);
+        promptBuilder.append("以下是用户提问文本：\n").append(content.text()).append("\n");
+        return Prompt.from(promptBuilder.toString());
 
     }
 
@@ -125,64 +188,65 @@ public class PromptsProvider {
 
 
 
-    public static Prompt confirmIntentPrompt(List<Content> contents, ChatMessage currentMessage, List<ChatMessage> history) {
-        StringBuilder promptBuilder = new StringBuilder();
-
-        // 添加历史会话
-        if (history != null && !history.isEmpty()) {
-            promptBuilder.append("历史对话：\n");
-            for (ChatMessage message : history) {
-                if (message.type() == ChatMessageType.USER || message.type() == ChatMessageType.AI) {
-                    promptBuilder.append(message.type() == ChatMessageType.USER ? "用户: " : "助手: ")
-                            .append(message.type() == ChatMessageType.USER ? ((UserMessage)message).contents() : ((AiMessage)message).text())
-                            .append("\n");
-                }
-            }
-            promptBuilder.append("\n");
-        }
-
-        // 添加检索到的内容
-        promptBuilder.append("你是一个专业的手机质检工程师，针对用户问题进行专业的意图判断助手。\n");
-        promptBuilder.append("参考内容：\n");
-        for (Content content : contents) {
-            promptBuilder.append(content.textSegment().metadata().getString("title")).append("\n");
-            promptBuilder.append(content.textSegment().text()).append("\n");
-        }
-        promptBuilder.append("\n");
-
-        // 添加当前消息
-        promptBuilder.append("当前用户消息：").append(((UserMessage)currentMessage).contents()).append("\n");
-        promptBuilder.append("  请遵循以下**推理链**（Chain of Thought）逐步分析并作答：\n" +
-                "                                \n" +
-                "                                1. **提取核心问题**：用户想了解什么？\n" +
-                "                                2. **是否存在模糊表达**：\n" +
-                "                                   - 是否包含不明确指代（如“这个”、“这种”、“这样”）？\n" +
-                "                                   - 是否缺乏具体主语、对象、现象？（如“要算划痕吗”）\n" +
-                "                                   - 是否为反问句、否定表达（如“不用判断吧？”）？\n" +
-                "                                3. **知识比对**：检索到的知识片段是否能明确用户的意图？\n" +
-                "                                4. **综合判断**：\n" +
-                "                                   - 若用户的疑问，能够确定咨询的具体问题（描述了具体现象的），请判定为**明确**；\n" +
-                "                                   - 若用户提问中，有明显的模糊代指，并且没有明确代指信息，无法确定具体问题（无法判断出工程师所遇现象的），请判定为**不明确**\n" +
-                "                                   - 若用户的疑问，无法能够确定提问的意图，判定为**不明确**；\n" +
-                "                                \n" +
-                "                                【输出格式要求】：\n" +
-                "                                  请以严格的JSON格式返回数据，不要包含任何解释或额外文本。" +
-                "                                        返回一个包含以下字段的JSON对象:" + "\n" +
-                "                                          intentResult: 明确 或 不明确" +
-                "                                          intent: 一句话总结用户的意图，询问用户是否想问这个，比如：你是不是想咨询【xxxxxx】" +
-                "                                          thoughtChain: 你的思考分析的全过程思维链路" +
-                "                                \n" +
-                "                                \n" +
-                "                                【重要注意事项】：\n" +
-                "                                - 必须基于检索到的知识和用户问题推理，**禁止主观想象或无依据推断**。\n" +
-                "                                - 不允许你基于常识、概率、经验去“猜测”用户意思；\n" +
-                "                                - 保持输出格式简洁、清晰，不输出额外说明或废话。\n" +
-                "                                - 在输出前，务必在内部推理中逐步完成以上步骤，以保证判断严谨、准确。\n" +
-                "                                - 如信息缺失，必须要求用户补充，不得代为填空；");
-
-        return Prompt.from(promptBuilder.toString());
-
-    }
+//    public static Prompt confirmIntentPrompt(List<Content> contents, ChatMessage currentMessage, List<ChatMessage> history) {
+//        StringBuilder promptBuilder = new StringBuilder();
+//
+//        // 添加历史会话
+//        if (history != null && !history.isEmpty()) {
+//            promptBuilder.append("历史对话：\n");
+//            for (ChatMessage message : history) {
+//                if (message.type() == ChatMessageType.USER || message.type() == ChatMessageType.AI) {
+//                    promptBuilder.append(message.type() == ChatMessageType.USER ? "用户: " : "助手: ")
+//                            .append(message.type() == ChatMessageType.USER ? ((UserMessage)message).contents() : ((AiMessage)message).text())
+//                            .append("\n");
+//                }
+//            }
+//            promptBuilder.append("\n");
+//        }
+//
+//        // 添加检索到的内容
+//        promptBuilder.append("你是一个专业的手机质检工程师，针对用户问题进行专业的意图判断助手。\n");
+//        promptBuilder.append("参考内容：\n");
+//        for (Content content : contents) {
+//            promptBuilder.append(content.textSegment().metadata().getString("title")).append("\n");
+//            promptBuilder.append(content.textSegment().text()).append("\n");
+//        }
+//        promptBuilder.append("\n");
+//
+//        // 添加当前消息
+//        promptBuilder.append("当前用户消息：").append(((UserMessage)currentMessage).contents()).append("\n");
+//        promptBuilder.append("  请遵循以下**推理链**（Chain of Thought）逐步分析并作答：\n" +
+//                "                                \n" +
+//                "                                1. **提取核心问题**：用户想了解什么？\n" +
+//                "                                2. **是否存在模糊表达**：\n" +
+//                "                                   - 是否包含不明确指代（如\"这个\"、\"这种\"、\"这样\"）？\n" +
+//                "                                   - 是否缺乏具体主语、对象、现象？（如\"要算划痕吗\"）\n" +
+//                "                                   - 是否为反问句、否定表达（如\"不用判断吧？\"）？\n" +
+//                "                                3. **知识比对**：检索到的知识片段是否能明确用户的意图？\n" +
+//                "                                4. **综合判断**：\n" +
+//                "                                   - 若用户的疑问，能够确定咨询的具体问题（描述了具体现象的），请判定为**明确**；\n" +
+//                "                                   - 若用户提问中，有明显的模糊代指，且无法从上下文或知识库中推断出具体含义，请判定为**不明确**；\n" +
+//                "                                   - 若用户的疑问，完全无法理解其意图，请判定为**不明确**；\n" +
+//                "                                   - 若用户使用了标点符号（如逗号、句号等）但问题本身清晰可理解，应判定为**明确**；\n" +
+//                "                                \n" +
+//                "                                【输出格式要求】：\n" +
+//                "                                  请以严格的JSON格式返回数据，不要包含任何解释或额外文本。" +
+//                "                                        返回一个包含以下字段的JSON对象:" + "\n" +
+//                "                                          intentResult: 明确 或 不明确" +
+//                "                                          intent: 一句话总结用户的意图，询问用户是否想问这个，比如：你是不是想咨询【xxxxxx】" +
+//                "                                          thoughtChain: 你的思考分析的全过程思维链路" +
+//                "                                \n" +
+//                "                                \n" +
+//                "                                【重要注意事项】：\n" +
+//                "                                - 必须基于检索到的知识和用户问题推理，**禁止主观想象或无依据推断**。\n" +
+//                "                                - 不允许你基于常识、概率、经验去"猜测"用户意思；\n" +
+//                "                                - 保持输出格式简洁、清晰，不输出额外说明或废话。\n" +
+//                "                                - 在输出前，务必在内部推理中逐步完成以上步骤，以保证判断严谨、准确。\n" +
+//                "                                - 如信息缺失，必须要求用户补充，不得代为填空；");
+//
+//        return Prompt.from(promptBuilder.toString());
+//
+//    }
 
 
 
@@ -208,9 +272,9 @@ public class PromptsProvider {
 //
 //                                1. **提取核心问题**：用户想了解什么？
 //                                2. **是否存在模糊表达**：
-//                                   - 是否包含不明确指代（如“这个”、“这种”、“这样”）？
-//                                   - 是否缺乏具体主语、对象、现象？（如“要算划痕吗”）
-//                                   - 是否为反问句、否定表达（如“不用判断吧？”）？
+//                                   - 是否包含不明确指代（如"这个"、"这种"、"这样"）？
+//                                   - 是否缺乏具体主语、对象、现象？（如"要算划痕吗"）
+//                                   - 是否为反问句、否定表达（如"不用判断吧？"）？
 //                                3. **知识比对**：检索到的知识片段是否能明确用户的意图？
 //                                4. **综合判断**：
 //                                   - 若用户的疑问，能够确定咨询的具体问题（描述了具体现象的），请判定为**明确**；
@@ -224,7 +288,7 @@ public class PromptsProvider {
 //
 //                                【重要注意事项】：
 //                                - 必须基于检索到的知识和用户问题推理，**禁止主观想象或无依据推断**。
-//                                - 不允许你基于常识、概率、经验去“猜测”用户意思；
+//                                - 不允许你基于常识、概率、经验去"猜测"用户意思；
 //                                - 保持输出格式简洁、清晰，不输出额外说明或废话。
 //                                - 在输出前，务必在内部推理中逐步完成以上步骤，以保证判断严谨、准确。
 //                                - 如信息缺失，必须要求用户补充，不得代为填空；

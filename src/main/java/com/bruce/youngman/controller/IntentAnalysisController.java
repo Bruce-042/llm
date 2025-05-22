@@ -20,7 +20,7 @@ public class IntentAnalysisController {
     @GetMapping("/analyze")
     public String analyzeIntents() {
         try {
-            String inputFile = "src/main/resources/documents/意图确认标注数据.xlsx";
+            String inputFile = "src/main/resources/documents/处理结果.xlsx";
             String outputFile = "src/main/resources/documents/意图分析结果_"+System.currentTimeMillis()+".xlsx";
             intentAnalyzer.analyzeIntents(inputFile, outputFile);
             return "Analysis completed. Results saved to: " + outputFile;

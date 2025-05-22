@@ -102,7 +102,7 @@ public class AssistantConfig {
     @Bean
     public IntentYoungMan confirmIntentYoungMan() {
         // todo 后面调成10
-        MessageWindowChatMemory messageWindowChatMemory = MessageWindowChatMemory.withMaxMessages(1);
+        MessageWindowChatMemory messageWindowChatMemory = MessageWindowChatMemory.withMaxMessages(2);
 
         EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
 
